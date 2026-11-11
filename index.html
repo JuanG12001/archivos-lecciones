@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Archivos en Python</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: una columna de cuaderno (máx. 920px) con pestañas fijas arriba; en "Aprende", índice de lecciones a la izquierda en pantallas anchas.
+   Motivo: la cuadrícula de la matriz; el resaltador amarillo marca la celda que se está mirando y el azul de bolígrafo es el acento. */
+:root{
+  --bg:#f6f7fa; --surface:#ffffff; --ink:#1b2130; --muted:#5b6578; --line:#dce1ea; --soft:#eef1f6; --out:#e7ebf2;
+  --accent:#2f4fd1; --accent-ink:#ffffff; --accent-soft:#e7ecff;
+  --mark:#ffd84a; --mark-soft:#fff3bf; --mark-ink:#1b2130;
+  --ok:#17804a; --ok-soft:#ddf2e6; --bad:#c23b2b; --bad-soft:#fbe4e0;
+  --kw:#7b3fc4; --str:#16794a; --num:#b4530f; --com:#8a93a6;
+  --f-display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --f-body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11141b; --surface:#181c26; --ink:#e8ebf3; --muted:#9ca5b8; --line:#2c3344; --soft:#1f2431; --out:#262c3b;
+  --accent:#8fa2ff; --accent-ink:#11141b; --accent-soft:#232b4e;
+  --mark:#f2cd3f; --mark-soft:#3a3418; --mark-ink:#1b2130;
+  --ok:#52c98b; --ok-soft:#153021; --bad:#ff8b7b; --bad-soft:#3b1e1a;
+  --kw:#c39bff; --str:#7bd6a4; --num:#f5a66c; --com:#7d869a; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#11141b; --surface:#181c26; --ink:#e8ebf3; --muted:#9ca5b8; --line:#2c3344; --soft:#1f2431; --out:#262c3b;
+  --accent:#8fa2ff; --accent-ink:#11141b; --accent-soft:#232b4e;
+  --mark:#f2cd3f; --mark-soft:#3a3418; --mark-ink:#1b2130;
+  --ok:#52c98b; --ok-soft:#153021; --bad:#ff8b7b; --bad-soft:#3b1e1a;
+  --kw:#c39bff; --str:#7bd6a4; --num:#f5a66c; --com:#7d869a; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{background:var(--bg)}
+body{color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.6;-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+h1,h2,h3,h4{font-family:var(--f-display);line-height:1.15;margin:0;text-wrap:balance;letter-spacing:-.01em}
+p{margin:0}
+button,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+code{font-family:var(--f-mono);font-size:.86em;background:var(--soft);border:1px solid var(--line);border-radius:5px;padding:.04em .32em;overflow-wrap:anywhere}
+strong{font-weight:700}
+
+.wrap{max-width:920px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding-block:10px}
+.marca{display:flex;align-items:center;gap:10px;margin-right:auto;min-width:0}
+.logo{display:grid;grid-template-columns:repeat(3,8px);gap:2px;flex:none}
+.logo i{width:8px;height:8px;border-radius:2px;background:var(--line)}
+.logo i.on{background:var(--mark)}
+.marca h1{font-size:1.2rem}
+.marca p{font-size:.8rem;color:var(--muted);line-height:1.3}
+.tabs{display:flex;gap:4px;background:var(--soft);border-radius:10px;padding:3px}
+.tabs button{border:0;background:none;padding:6px 14px;border-radius:8px;color:var(--muted);font-weight:700;font-size:.95rem}
+.tabs button[aria-current="page"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+
+main{padding-block:28px 64px}
+.intro{display:grid;gap:6px;margin-bottom:22px;max-width:62ch}
+.intro h2{font-size:clamp(1.6rem,4vw,2.2rem)}
+.intro p{color:var(--muted)}
+
+/* Aprende */
+.aprende{display:grid;gap:24px;grid-template-columns:minmax(0,1fr)}
+.indice{min-width:0}
+@media (min-width:860px){.aprende{grid-template-columns:220px minmax(0,1fr);align-items:start}.indice{position:sticky;top:calc(env(safe-area-inset-top,0px) + 76px)}}
+.indice ol{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+@media (max-width:859px){.indice ol{display:flex;overflow-x:auto;gap:6px;padding-bottom:4px}.indice li{flex:none}}
+.indice button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:1px solid transparent;background:none;border-radius:10px;padding:8px 10px;color:var(--muted);font-weight:700;font-size:.95rem}
+.indice button .n{flex:none;width:26px;height:26px;border-radius:7px;display:grid;place-items:center;background:var(--soft);color:var(--muted);font-family:var(--f-display);font-size:.9rem}
+.indice button[aria-current="true"]{background:var(--surface);border-color:var(--line);color:var(--ink)}
+.indice button[aria-current="true"] .n{background:var(--accent);color:var(--accent-ink)}
+.indice button.hecho .n{background:var(--ok-soft);color:var(--ok)}
+.leccion{min-width:0;display:grid;gap:18px}
+.leccion > h2{font-size:clamp(1.5rem,3.6vw,2rem)}
+.leccion .eti{font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.leccion h3{font-size:1.2rem;margin-top:10px}
+.leccion > p,.leccion > ul{max-width:66ch}
+.leccion ul{margin:0;padding-left:1.15em;display:grid;gap:6px}
+
+pre.code{margin:0;background:var(--soft);border:1px solid var(--line);border-radius:12px 12px 0 0;padding:12px 14px;overflow-x:auto;font-family:var(--f-mono);font-size:.84rem;line-height:1.6;tab-size:4}
+pre.code.solo{border-radius:12px}
+pre.code code{background:none;border:0;padding:0;font-size:inherit}
+.k{color:var(--kw);font-weight:600}.s{color:var(--str)}.nu{color:var(--num)}.c{color:var(--com);font-style:italic}
+.bloque-code{display:grid;min-width:0}
+.bloque-code .tit{font-size:.82rem;font-weight:700;color:var(--muted);margin-bottom:6px}
+.usa{font-weight:400;font-size:.85rem;color:var(--muted)}
+.salida{background:var(--out);border:1px solid var(--line);border-top:0;border-radius:0 0 12px 12px;padding:8px 14px 10px;min-width:0}
+.salida .lab{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.salida pre{margin:2px 0 0;font-family:var(--f-mono);font-size:.84rem;line-height:1.55;white-space:pre;overflow-x:auto}
+.ojo{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;background:var(--mark-soft);border-radius:12px;padding:12px 14px;max-width:70ch}
+.ojo b{font-family:var(--f-display);font-size:.95rem}
+.ojo .ic{width:22px;height:22px;border-radius:6px;background:var(--mark);color:var(--mark-ink);display:grid;place-items:center;font-weight:700;font-family:var(--f-display)}
+.tabla{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.tabla table{border-collapse:collapse;width:100%;font-size:.92rem;min-width:560px}
+.tabla th,.tabla td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.tabla tr:last-child td{border-bottom:0}
+.tabla th{font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.nota{background:var(--surface);border:1px dashed var(--accent);border-radius:12px;padding:14px 16px;display:grid;gap:10px;max-width:70ch}
+.formula{display:flex;justify-content:center;padding:14px;background:var(--surface);border:1px solid var(--line);border-radius:12px;font-family:"Times New Roman",Georgia,serif;font-size:1.35rem;overflow-x:auto}
+.formula .raiz{display:inline-flex;align-items:stretch}
+.formula .sig{font-size:2.2rem;line-height:1;align-self:center}
+.formula .bajo{border-top:2px solid var(--ink);display:inline-flex;align-items:center;padding:4px 6px 0}
+.formula .frac{display:inline-grid;text-align:center;margin:0 4px}
+.formula .frac span:first-child{border-bottom:1.5px solid var(--ink);padding:0 6px 2px}
+.formula sub,.formula sup{font-size:.6em}
+
+/* widgets */
+.widget{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:14px;min-width:0}
+.widget .wt{font-family:var(--f-display);font-size:1.02rem}
+.widget .ayuda{font-size:.9rem;color:var(--muted)}
+.fila-ctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{border:0;border-radius:10px;padding:9px 16px;font-weight:700;background:var(--accent);color:var(--accent-ink);display:inline-flex;align-items:center;gap:6px}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.sec{background:var(--soft);color:var(--ink);border:1px solid var(--line)}
+.btn.ok{background:var(--ok);color:var(--accent-ink)}
+.btn.chico{padding:6px 12px;font-size:.9rem}
+select{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 8px}
+.lectura{font-family:var(--f-mono);font-size:.92rem;background:var(--soft);border-radius:10px;padding:10px 12px;min-height:2.6em;overflow-wrap:anywhere}
+.vars{display:flex;flex-wrap:wrap;gap:8px}
+.vars span{font-family:var(--f-mono);font-size:.88rem;background:var(--soft);border-radius:8px;padding:4px 10px}
+.vars b{color:var(--accent)}
+
+.matriz{display:inline-grid;gap:4px;font-variant-numeric:tabular-nums;max-width:100%}
+.matriz .lbl{font-family:var(--f-mono);font-size:.72rem;color:var(--muted);display:grid;place-items:center;border:0;background:none;padding:0;min-height:22px}
+button.lbl:hover{color:var(--accent)}
+.matriz .lbl.on{color:var(--accent);font-weight:700}
+.celda{width:clamp(36px,9vw,52px);height:clamp(36px,9vw,52px);border:1.5px solid var(--line);border-radius:9px;background:var(--surface);display:grid;place-items:center;font-family:var(--f-mono);font-weight:600;font-size:clamp(.8rem,2.6vw,.98rem);color:var(--ink);padding:0;transition:background .15s,border-color .15s,transform .1s}
+button.celda:hover{border-color:var(--accent)}
+.celda.tinte{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 30%,var(--line))}
+.celda.visto{background:var(--soft);color:var(--muted)}
+.celda.sel{background:var(--mark);border-color:var(--mark);color:var(--mark-ink)}
+.celda.max{outline:2px solid var(--accent);outline-offset:1px}
+.celda.ok{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.celda.bad{background:var(--bad-soft);border-color:var(--bad);color:var(--bad);animation:sacude .3s}
+.celda.vacia{color:transparent}
+.celda.pista{border-color:var(--mark);border-style:dashed}
+@keyframes sacude{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.ecu{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.ecu .op{font-family:var(--f-display);font-size:1.5rem;color:var(--muted)}
+.ecu figure{margin:0;display:grid;gap:4px;justify-items:center}
+.ecu figcaption{font-family:var(--f-mono);font-size:.8rem;color:var(--muted)}
+
+.notas-t{overflow-x:auto}
+.notas-t table{border-collapse:separate;border-spacing:3px;font-variant-numeric:tabular-nums;font-family:var(--f-mono);font-size:.88rem}
+.notas-t th,.notas-t td{padding:6px 9px;border-radius:7px;text-align:right;white-space:nowrap}
+.notas-t th{font-family:var(--f-body);font-size:.8rem;color:var(--muted)}
+.notas-t th button,.notas-t td button{border:0;background:none;padding:0;font:inherit;color:inherit}
+.notas-t td.n{background:var(--soft)}
+.notas-t td.res{color:var(--accent);font-weight:600}
+.notas-t .on{background:var(--mark)!important;color:var(--mark-ink)!important}
+.notas-t .tin{background:var(--mark-soft)!important}
+.tira{display:flex;flex-wrap:wrap;gap:3px}.tira .ch{display:grid;justify-items:center;min-width:26px;border:1.5px solid var(--line);border-radius:7px;padding:3px 2px;background:var(--surface)}.tira .ch b{font-family:var(--f-mono);font-size:1rem}.tira .ch i{font-style:normal;font-family:var(--f-mono);font-size:.62rem;color:var(--muted)}.tira .ch.on{background:var(--mark);border-color:var(--mark)}.tira .ch.on b,.tira .ch.on i{color:var(--mark-ink)}
+.barras{display:grid;grid-template-columns:repeat(20,minmax(0,1fr));gap:3px;align-items:end;height:120px}
+.barras div{background:var(--accent);border-radius:3px 3px 0 0;min-height:2px}
+.barras-eje{display:grid;grid-template-columns:repeat(20,minmax(0,1fr));gap:3px;font-family:var(--f-mono);font-size:.62rem;color:var(--muted);text-align:center}
+
+/* preguntas */
+.preg{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:12px;min-width:0}
+.preg .q{font-weight:700}
+.ops{display:grid;gap:8px}
+.ops.salidas{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.op-b{display:flex;gap:10px;align-items:flex-start;text-align:left;background:var(--surface);border:1.5px solid var(--line);border-radius:11px;padding:10px 12px;min-width:0}
+.op-b:hover:not(:disabled){border-color:var(--accent)}
+.op-b[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.op-b.ok{border-color:var(--ok);background:var(--ok-soft)}
+.op-b.bad{border-color:var(--bad);background:var(--bad-soft)}
+.op-b:disabled{cursor:default}
+.op-b .v{min-width:0}
+.op-b .v.mono{font-family:var(--f-mono);font-size:.86rem;white-space:pre-wrap;overflow-wrap:anywhere}
+.fichas{display:flex;flex-wrap:wrap;gap:8px}
+.ficha{font-family:var(--f-mono);font-size:.9rem;font-weight:600;background:var(--surface);border:1.5px solid var(--line);border-radius:9px;padding:7px 12px;max-width:100%;overflow-wrap:anywhere;text-align:left}
+.ficha[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.hueco{display:inline-block;min-width:3em;padding:0 .35em;border-bottom:2.5px solid var(--accent);background:var(--accent-soft);border-radius:5px 5px 0 0;text-align:center}
+.hueco.vacio{color:transparent}
+.hueco.ok{border-color:var(--ok);background:var(--ok-soft)}
+.hueco.bad{border-color:var(--bad);background:var(--bad-soft)}
+.fb{border-radius:11px;padding:10px 12px;display:grid;gap:6px}
+.fb.ok{background:var(--ok-soft)}.fb.bad{background:var(--bad-soft)}
+.fb h4{font-size:1rem}
+.fb.ok h4{color:var(--ok)}.fb.bad h4{color:var(--bad)}
+.fb pre{margin:0;font-family:var(--f-mono);font-size:.84rem;background:var(--surface);border-radius:8px;padding:6px 10px;overflow-x:auto}
+.zona-t{font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.prog,.banco{display:grid;gap:6px;min-height:44px;padding:8px;border-radius:11px}
+.prog{background:var(--soft);border:1.5px dashed var(--line)}
+.banco{border:1px solid var(--line)}
+.blq{display:flex;align-items:flex-start;width:100%;text-align:left;border:1.5px solid var(--line);background:var(--surface);border-radius:9px;padding:6px 10px;font-family:var(--f-mono);font-size:.8rem}
+.blq .ind{flex:none;align-self:stretch;width:calc(var(--n) * 1.1em);background:repeating-linear-gradient(90deg,var(--line) 0 2px,transparent 2px 1.1em)}
+.blq .bt{min-width:0;flex:1;white-space:pre-wrap;overflow-wrap:anywhere}
+.blq.ok{border-color:var(--ok)}.blq.bad{border-color:var(--bad);background:var(--bad-soft)}
+.vacio-t{color:var(--muted);font-size:.88rem}
+.chequeo{display:grid;gap:12px}
+.navlec{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:6px}
+
+/* juegos y examen */
+.tarjetas{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+.tarj{display:grid;gap:8px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+.tarj:hover{border-color:var(--accent)}
+.tarj h3{font-size:1.1rem}
+.tarj p{font-size:.92rem;color:var(--muted)}
+.tarj .rec{font-size:.82rem;color:var(--accent);font-weight:700}
+.mini{display:grid;grid-template-columns:repeat(4,10px);gap:2px}
+.mini i{width:10px;height:10px;border-radius:2px;background:var(--line)}
+.mini i.on{background:var(--mark)}.mini i.az{background:var(--accent)}
+.juego{display:grid;gap:16px;justify-items:start}
+.juego > *{max-width:100%}
+.marcador{display:flex;flex-wrap:wrap;gap:8px;align-items:center;width:100%}
+.marcador .pill{font-size:.85rem;font-weight:700;background:var(--soft);border-radius:999px;padding:4px 12px;font-variant-numeric:tabular-nums}
+.marcador .esp{margin-left:auto}
+.consigna{font-family:var(--f-display);font-size:1.25rem}
+.consigna code{font-size:.95em}
+.barra{height:6px;background:var(--soft);border-radius:999px;overflow:hidden;width:100%}
+.barra i{display:block;height:100%;background:var(--accent);border-radius:999px;transition:width .3s}
+.final{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;display:grid;gap:10px;justify-items:start;width:100%}
+.final .grande{font-family:var(--f-display);font-size:3rem;line-height:1}
+.final .grande small{font-size:1.2rem;color:var(--muted)}
+.ejercicios{display:grid;gap:12px;margin-top:34px}
+.ejer{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:10px;min-width:0}
+.ejer .fu{font-size:.8rem;color:var(--muted);font-weight:700}
+.ejer details summary{cursor:pointer;font-weight:700;color:var(--accent)}
+.ejer details > div{margin-top:8px;display:grid;gap:8px}
+.ejer .esperada{font-family:var(--f-mono);font-size:.84rem;background:var(--out);border-radius:10px;padding:8px 12px;white-space:pre;overflow-x:auto;margin:0}
+.copiar{justify-self:start}
+.leccion,.preg,.widget,.chequeo,.juego,.ejer,.final,.ejer details > div{grid-template-columns:minmax(0,1fr)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="marca">
+      <div class="logo" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i></div>
+      <div><h1>Archivos en Python</h1><p>Clases del 9 y 11 de noviembre · Programación</p></div>
+    </div>
+    <nav class="tabs" aria-label="Secciones">
+      <button type="button" data-ir="aprende">Aprende</button>
+      <button type="button" data-ir="juegos">Juegos</button>
+      <button type="button" data-ir="examen">Examen</button>
+    </nav>
+  </div>
+</header>
+<main class="wrap" id="vista"></main>
+
+<script>
+const DATA = {"lecciones":[{"id":"abrir","titulo":"Abrir y leer un archivo","corto":"Leer un archivo","bloques":[{"tipo":"p","texto":"Un archivo de texto (`.txt`) es como un cuaderno: **una línea debajo de otra**. En clase el archivo traía una línea por estudiante, con su cédula, nombre, apellido y materias."},{"tipo":"p","texto":"Para trabajar con él hay 3 pasos: **abrirlo, leerlo y cerrarlo**. En esta página usamos este archivo de ejemplo, `alumnos.txt`:"},{"tipo":"archivo","nombre":"alumnos.txt","texto":"30474035,Perez,Gil,Ana,Maria,0790\n28999111,Arias,Mora,Luis,Jose,0760\n31000555,Lopez,Rey,Eva,Sofia,0790\n29555222,Diaz,Paz,Juan,Carlos,0790"},{"tipo":"code","code":"f = open(\"alumnos.txt\", \"r\")\nlecturaArchivo = f.readlines()\nfor linea in lecturaArchivo:\n    print(linea.strip())\nf.close()","titulo":"El programa de clase","entrada":"","usa":"","salida":"30474035,Perez,Gil,Ana,Maria,0790\n28999111,Arias,Mora,Luis,Jose,0760\n31000555,Lopez,Rey,Eva,Sofia,0790\n29555222,Diaz,Paz,Juan,Carlos,0790"},{"tipo":"lista","items":["`open(\"alumnos.txt\", \"r\")` abre el archivo. La `\"r\"` es de *read*: solo para leer.","`f.readlines()` lo lee completo y lo devuelve como una **lista de líneas**.","El `for` pasa por cada línea, una por una.","`f.close()` lo cierra al terminar."]},{"tipo":"h","texto":"try y except: por si algo sale mal"},{"tipo":"p","texto":"Si el nombre del archivo está mal escrito, Python da error y el programa se cae. Con `try` se **intenta** hacer algo, y si falla, se ejecuta lo del `except` en vez de caerse."},{"tipo":"code","code":"try:\n    f = open(\"alumnos\", \"r\")\n    print(f.readlines())\n    f.close()\nexcept:\n    print(\"hubo problemas\")","titulo":"Tu ejemplo del cuaderno: falta el .txt","entrada":"","usa":"","salida":"hubo problemas"},{"tipo":"ojo","texto":"Ese fue el «¿por qué hubo problemas?» de tu cuaderno: el nombre del archivo no estaba completo, le faltaba el `.txt`. El nombre tiene que ser exacto."}],"chequeo":[{"t":"elige","q":"¿Qué devuelve `f.readlines()`?","ops":["Una lista con las líneas del archivo","Solo la primera línea","Un número"],"exp":"Cada elemento de la lista es una línea del archivo.","code":null},{"t":"elige","q":"Si el archivo no existe, ¿qué hace el programa con `try` y `except`?","ops":["Muestra el mensaje del except","Se cae con error","No hace nada"],"exp":"Lo del `try` falla y Python pasa al `except`.","code":null}]},{"id":"cortar","titulo":"Cortar un texto: los corchetes","corto":"Cortar textos","bloques":[{"tipo":"p","texto":"Cada línea es un **texto**, y cada letra o número del texto tiene una **posición**, contando desde 0 (igual que en las listas y matrices)."},{"tipo":"widget","w":"slicing"},{"tipo":"p","texto":"Con los corchetes **cortas un pedazo**, como con tijera:"},{"tipo":"code","code":"a = \"esto es una prueba\"\nprint(a[:4])\nprint(a[3:8])\nprint(a[8:])","titulo":"El ejemplo de clase","entrada":"","usa":"","salida":"esto\no es\nuna prueba"},{"tipo":"lista","items":["`a[3:8]`: desde la posición 3 **hasta antes de la 8**. El segundo número no se incluye, así que salen 8 − 3 = 5 caracteres.","`a[:4]`: sin el primer número es **desde el principio**. Son los primeros 4.","`a[8:]`: sin el segundo número es **hasta el final**."]},{"tipo":"h","texto":"La cédula: linea[41:49]"},{"tipo":"p","texto":"En el archivo del profe cada dato está siempre en el mismo sitio de la línea. La cédula empieza en la posición 41 y tiene 8 números, por eso es `linea[41:49]`: **41 + 8 = 49**."},{"tipo":"h","texto":"Números negativos: desde el final"},{"tipo":"p","texto":"Un número negativo cuenta **desde el final**: `-1` es el último, `-2` el penúltimo. Entonces `[-4:]` es **los últimos 4**."},{"tipo":"code","code":"dato = \"SEC01-0790\"\nprint(dato[-1])\nprint(dato[-4:])","titulo":"Lo que hizo el profe con el código de la materia","entrada":"","usa":"","salida":"0\n0790"},{"tipo":"ojo","texto":"En la computadora escribiste `a[:3:8]`, con dos puntos al principio. Eso significa otra cosa y da solo `e`. Es `a[3:8]`, como en tu cuaderno."}],"chequeo":[{"t":"salida","q":"¿Qué aparece en la pantalla?","code":"t = \"programacion\"\nprint(t[:7])","ops":["program a","programa","rogram"],"exp":"Los primeros 7 caracteres: posiciones 0 a 6.","correcta":"program"},{"t":"salida","q":"¿Qué aparece en la pantalla?","code":"t = \"cedula30474035\"\nprint(t[-8:])","ops":["cedula30","30474035 ","5"],"exp":"Los últimos 8 caracteres: la cédula.","correcta":"30474035"}]},{"id":"strip","titulo":"strip y split","corto":"strip y split","bloques":[{"tipo":"h","texto":"strip(): quitar los espacios de los lados"},{"tipo":"code","code":"a = \"   casa \"\nprint(len(a))\nprint(len(a.strip()))","titulo":"El ejemplo de tu cuaderno","entrada":"","usa":"","salida":"8\n4"},{"tipo":"p","texto":"`strip()` quita los espacios (y el salto de línea) **del principio y del final**, no los del medio. Por eso `\"   casa \"` mide 8 y sin espacios mide 4."},{"tipo":"p","texto":"En clase se usó para saber si en un espacio de la línea **hay una materia o está vacío**: si después de quitar los espacios no queda nada, está vacío."},{"tipo":"code","code":"linea = \"30474035 0790 0760     \"\nprint(len(linea[14:18].strip()) != 0)\nprint(len(linea[19:23].strip()) != 0)","titulo":"¿Hay materia en ese espacio?","entrada":"","usa":"","salida":"True\nFalse"},{"tipo":"h","texto":"split(): partir el texto en una lista"},{"tipo":"p","texto":"`split(\",\")` corta el texto **cada vez que encuentra una coma** y te da los pedazos en una lista."},{"tipo":"code","code":"palabra = \"asignatura,0760,01\"\na = palabra.split(\",\")\nprint(a)\nprint(a[0])\nprint(a[1])","titulo":"El ejemplo de tu cuaderno (revisar)","entrada":"","usa":"","salida":"['asignatura', '0760', '01']\nasignatura\n0760"},{"tipo":"ojo","texto":"Si el texto tiene espacios después de la coma (`\"asignatura, 0760, 01\"`), los pedazos quedan con el espacio: `' 0760'`. Y `split(\"|\")` hace lo mismo pero cortando donde hay `|`."}],"chequeo":[{"t":"salida","q":"¿Qué aparece en la pantalla?","code":"partes = \"30474035,Perez,Ana\".split(\",\")\nprint(partes[1])","ops":["30474035","Perez,Ana","Ana"],"exp":"partes queda `['30474035', 'Perez', 'Ana']` y la posición 1 es Perez.","correcta":"Perez"},{"t":"salida","q":"¿Qué aparece en la pantalla?","code":"print(len(\"  hola  \".strip()))","ops":["8","6","2"],"exp":"Sin los espacios de los lados queda `hola`: 4 letras.","correcta":"4"}]},{"id":"buscar","titulo":"Buscar en el archivo","corto":"Buscar","bloques":[{"tipo":"p","texto":"Ya con eso se puede buscar. La idea: **leer línea por línea, partirla, y si el dato coincide, guardarlo** en una lista con `append`."},{"tipo":"code","code":"cedula = \"30474035\"\ntry:\n    f = open(\"alumnos.txt\", \"r\")\n    for linea in f.readlines():\n        if cedula == linea[0:8]:\n            print(linea.strip())\n    f.close()\nexcept:\n    print(\"hubo problemas\")","titulo":"9-11: buscar la línea de una cédula","entrada":"","usa":"","salida":"30474035,Perez,Gil,Ana,Maria,0790"},{"tipo":"p","texto":"Clase del 11-11: te dan el **código de una materia** y hay que sacar la lista de todos los que la inscribieron. Cada persona se guarda en tres listas: cédulas, nombres y apellidos."},{"tipo":"code","code":"codigo = \"0790\"\ncedulas = []\nnombres = []\napellidos = []\ntry:\n    f = open(\"alumnos.txt\", \"r\")\n    lecturaArchivo = f.readlines()\n    for linea in lecturaArchivo:\n        partes = linea.strip().split(\",\")\n        if partes[5][-4:] == codigo:\n            cedulas.append(partes[0])\n            nombres.append(partes[3] + \" \" + partes[4])\n            apellidos.append(partes[1] + \" \" + partes[2])\n    f.close()\nexcept:\n    print(\"hubo problemas\")\n\nprint(apellidos)\nprint(nombres)\nprint(cedulas)","titulo":"11-11: todos los de la materia 0790","entrada":"","usa":"","salida":"['Perez Gil', 'Lopez Rey', 'Diaz Paz']\n['Ana Maria', 'Eva Sofia', 'Juan Carlos']\n['30474035', '31000555', '29555222']"},{"tipo":"lista","items":["`linea.strip().split(\",\")` quita el salto de línea y parte la línea por las comas.","`partes[5][-4:]` son los últimos 4 caracteres del dato del código.","Si coincide, se agrega la persona a las 3 listas. Fíjate que la **misma posición** en las 3 listas es la misma persona."]},{"tipo":"ojo","texto":"Si el código es lo último de la línea, quítale antes el salto de línea con `strip()`. Si no, `[-4:]` agarra el salto de línea y nunca coincide."}],"chequeo":[{"t":"elige","q":"En las tres listas, `apellidos[2]`, `nombres[2]` y `cedulas[2]`…","ops":["son de la misma persona","son de personas distintas","están vacíos"],"exp":"Se agregaron juntos, en el mismo momento: la misma posición es la misma persona.","code":null},{"t":"elige","q":"¿Para qué se usa `append`?","ops":["Para agregar un elemento al final de la lista","Para abrir el archivo","Para ordenar la lista"],"exp":"Cada persona encontrada se agrega al final.","code":null}]},{"id":"ordenar","titulo":"Ordenar las tres listas juntas","corto":"Ordenar","bloques":[{"tipo":"p","texto":"Esta es la parte que no entendiste. El problema: si ordenas **solo** los apellidos, los nombres y las cédulas se quedan donde estaban y **se mezclan las personas**."},{"tipo":"p","texto":"La solución: cada vez que dos apellidos cambian de puesto, se cambian **los mismos puestos en las otras dos listas**. Así cada persona se mueve completa, como una fila de una tabla."},{"tipo":"widget","w":"ordenar"},{"tipo":"code","code":"def ordenar(lista1, lista2, lista3):\n    for i in range(len(lista1) - 1):\n        for j in range(i + 1, len(lista1)):\n            if lista1[i] > lista1[j]:\n                lista1[i], lista1[j] = lista1[j], lista1[i]\n                lista2[i], lista2[j] = lista2[j], lista2[i]\n                lista3[i], lista3[j] = lista3[j], lista3[i]\n    return lista1, lista2, lista3","titulo":"La función de clase","entrada":"","usa":"","salida":""},{"tipo":"lista","items":["Los dos `for` son el ordenamiento por intercambio de antes: compara cada persona con **todas las que están después**.","Con textos, `>` compara **por orden alfabético**: `\"Gomez\" > \"Arias\"` es verdad porque la G va después de la A. Si está desordenado, se intercambian.","`x, y = y, x` intercambia dos valores en una sola línea.","Ordena según la **primera lista** que le pases. Para ordenar por cédula, pon las cédulas de primera."]},{"tipo":"h","texto":"a, b, c = ordenar(...)"},{"tipo":"p","texto":"La función termina con `return lista1, lista2, lista3`: devuelve **las tres listas juntas**. Y `a, b, c = ...` las recibe **en el mismo orden**: es como abrir un paquete con 3 cosas y ponerle nombre a cada una."},{"tipo":"code","code":"def ordenar(lista1, lista2, lista3):\n    for i in range(len(lista1) - 1):\n        for j in range(i + 1, len(lista1)):\n            if lista1[i] > lista1[j]:\n                lista1[i], lista1[j] = lista1[j], lista1[i]\n                lista2[i], lista2[j] = lista2[j], lista2[i]\n                lista3[i], lista3[j] = lista3[j], lista3[i]\n    return lista1, lista2, lista3\n\napellidos = [\"Perez Gil\", \"Arias Mora\", \"Lopez Rey\"]\nnombres = [\"Ana\", \"Luis\", \"Eva\"]\ncedulas = [\"30474035\", \"28999111\", \"31000555\"]\na, b, c = ordenar(apellidos, nombres, cedulas)\nprint(a)\nprint(b)\nprint(c)","titulo":"Probándola","entrada":"","usa":"","salida":"['Arias Mora', 'Lopez Rey', 'Perez Gil']\n['Luis', 'Eva', 'Ana']\n['28999111', '31000555', '30474035']"},{"tipo":"p","texto":"`a` son los apellidos ya ordenados, `b` los nombres y `c` las cédulas, y cada nombre sigue con su apellido. Si quieres separar por sección, es igual: una **cuarta lista** que también se intercambia."}],"chequeo":[{"t":"salida","q":"¿Qué aparece en la pantalla?","code":"x = 5\ny = 9\nx, y = y, x\nprint(x, y)","ops":["5 9","9 9","5 5"],"exp":"Se intercambian: x queda con 9 y y con 5.","correcta":"9 5"},{"t":"elige","q":"Con `a, b, c = ordenar(apellidos, nombres, cedulas)`, ¿qué es `c`?","ops":["Las cédulas, ya ordenadas junto con su persona","Los apellidos","Un número"],"exp":"Se reciben en el mismo orden en que la función las devuelve.","code":null}]},{"id":"mostrar","titulo":"Mostrar la lista y guardarla","corto":"Mostrar y guardar","bloques":[{"tipo":"h","texto":"ljust(40): columnas derechas"},{"tipo":"p","texto":"`texto.ljust(40)` rellena con espacios a la derecha hasta tener 40 caracteres. Así cada columna empieza en el mismo sitio, aunque los nombres sean de distinto largo."},{"tipo":"code","code":"a = [\"Arias Mora\", \"Lopez Rey\"]\nb = [\"Luis Jose\", \"Eva Sofia\"]\nc = [\"28999111\", \"31000555\"]\nfor i in range(len(a)):\n    print(a[i].ljust(15), b[i].ljust(15), c[i])","titulo":"Uso ljust(15) aquí para que quepa en el teléfono","entrada":"","usa":"","salida":"Arias Mora      Luis Jose       28999111\nLopez Rey       Eva Sofia       31000555"},{"tipo":"h","texto":"Guardar en un archivo nuevo: \"w\""},{"tipo":"p","texto":"Con `\"w\"` (de *write*) el archivo se abre **para escribir**: si no existe lo crea, y si existe lo borra y lo escribe de nuevo. `write` escribe texto, y `\"\\n\"` es el salto de línea, para bajar a la línea siguiente."},{"tipo":"code","code":"m = open(\"listado.txt\", \"w\")\nm.write(\"listado\" + \"\\n\")\nm.write(\"codigo 0790\" + \"\\n\")\nm.write(\"Arias Mora\".ljust(15) + \"Luis Jose\" + \"\\n\")\nm.close()\n\nprint(open(\"listado.txt\").read())","titulo":"Escribir y después leer lo que quedó","entrada":"","usa":"","salida":"listado\ncodigo 0790\nArias Mora     Luis Jose"},{"tipo":"ojo","texto":"Sin el `\"\\n\"` todo queda pegado en una sola línea. Y no olvides el `close()`: a veces lo escrito no se guarda hasta que se cierra."}],"chequeo":[{"t":"elige","q":"¿Qué hace `open(\"lista.txt\", \"w\")`?","ops":["Abre el archivo para escribir (lo crea o lo borra y empieza de nuevo)","Lo abre solo para leer","Lo borra del computador"],"exp":"`\"r\"` es leer y `\"w\"` es escribir.","code":null},{"t":"salida","q":"¿Qué aparece en la pantalla?","code":"print(\"Ana\".ljust(6) + \"|\")","ops":["Ana|","   Ana|","Ana      |"],"exp":"Ana tiene 3 letras: se agregan 3 espacios hasta llegar a 6.","correcta":"Ana   |"}]}],"examen":[{"t":"elige","q":"¿Qué letra se usa en `open` para **leer** un archivo?","ops":["\"r\"","\"w\"","\"l\""],"exp":"r de read. La w es para escribir.","code":null},{"t":"elige","q":"¿Qué hace `readlines()`?","ops":["Devuelve una lista con todas las líneas","Lee solo una línea","Escribe en el archivo"],"exp":"Cada línea es un elemento de la lista.","code":null},{"t":"salida","q":"¿Qué aparece en la pantalla?","code":"a = \"esto es una prueba\"\nprint(a[:4])","ops":["esto ","est","o es"],"exp":"Desde el principio hasta antes de la posición 4.","correcta":"esto"},{"t":"salida","q":"¿Qué aparece en la pantalla?","code":"a = \"esto es una prueba\"\nprint(a[8:11])","ops":["una ","na p","s un"],"exp":"Posiciones 8, 9 y 10: `una`.","correcta":"una"},{"t":"elige","q":"Una cédula empieza en la posición 41 y tiene 8 números. ¿Cómo se corta?","ops":["`linea[41:49]`","`linea[41:48]`","`linea[41:8]`"],"exp":"El segundo número no se incluye: 41 + 8 = 49.","code":null},{"t":"salida","q":"¿Qué aparece en la pantalla?","code":"dato = \"SEC02-0760\"\nprint(dato[-4:])","ops":["SEC0","-0760","0"],"exp":"Los últimos 4 caracteres.","correcta":"0760"},{"t":"salida","q":"¿Qué aparece en la pantalla?","code":"print(len(\" programa \".strip()))","ops":["10","9","7"],"exp":"Sin los espacios de los lados queda `programa`: 8 letras.","correcta":"8"},{"t":"salida","q":"¿Qué aparece en la pantalla?","code":"partes = \"Diaz,Paz,Juan\".split(\",\")\nprint(partes[2])","ops":["Paz","Diaz,Paz,Juan","Diaz"],"exp":"La lista es `['Diaz', 'Paz', 'Juan']` y la posición 2 es Juan.","correcta":"Juan"},{"t":"completa","q":"Completa para agregar la cédula a la lista.","code":"cedulas = []\ncedulas.___(\"30474035\")\nprint(cedulas)","ops":["append","add","write"],"exp":"Las listas se llenan con `append`.","salida":"['30474035']"},{"t":"elige","q":"¿Por qué la función `ordenar` intercambia también las otras dos listas?","ops":["Para que cada nombre y cédula sigan con su apellido","Para ordenar las tres por separado","Porque si no da error"],"exp":"Si solo se ordenan los apellidos, las personas se mezclan.","code":null},{"t":"salida","q":"¿Qué aparece en la pantalla?","code":"x = \"Lopez\"\ny = \"Arias\"\nif x > y:\n    x, y = y, x\nprint(x, y)","ops":["Lopez Arias","Arias Arias","Lopez Lopez"],"exp":"`\"Lopez\" > \"Arias\"` es verdad (L va después de A), así que se intercambian.","correcta":"Arias Lopez"},{"t":"elige","q":"En `a, b, c = ordenar(cedulas, apellidos, nombres)`, ¿por qué queda ordenado?","ops":["Por cédula, porque es la primera lista","Por apellido","Por nombre"],"exp":"La función compara la primera lista que recibe.","code":null},{"t":"salida","q":"¿Qué aparece en la pantalla?","code":"print(\"Eva\".ljust(5) + \"|\" + \"Luis\".ljust(5) + \"|\")","ops":["Eva|Luis|","Eva |Luis |","  Eva| Luis|"],"exp":"Cada texto se rellena con espacios hasta 5.","correcta":"Eva  |Luis |"},{"t":"elige","q":"¿Para qué sirve el `\"\\n\"` en `m.write(\"listado\" + \"\\n\")`?","ops":["Para bajar a la línea siguiente","Para cerrar el archivo","Para borrar la línea"],"exp":"Es el salto de línea.","code":null}],"ejercicios":[{"id":"e1","titulo":"Leer el archivo completo","fuente":"Clase del 9-11","enunciado":"Crea el archivo alumnos.txt con el contenido de la lección 1 (en VS Code: archivo nuevo, pegas el texto y lo guardas con ese nombre en la misma carpeta del programa). Muestra cada línea sin el salto de línea, y si el archivo no se puede abrir, muestra «hubo problemas».","pista":"open con \"r\", readlines(), un for con print(linea.strip()) y close(). Todo dentro de try.","solucion":"try:\n    f = open(\"alumnos.txt\", \"r\")\n    lecturaArchivo = f.readlines()\n    for linea in lecturaArchivo:\n        print(linea.strip())\n    f.close()\nexcept:\n    print(\"hubo problemas\")","entrada":"","salida":"30474035,Perez,Gil,Ana,Maria,0790\n28999111,Arias,Mora,Luis,Jose,0760\n31000555,Lopez,Rey,Eva,Sofia,0790\n29555222,Diaz,Paz,Juan,Carlos,0790"},{"id":"e2","titulo":"Buscar una cédula","fuente":"Clase del 9-11","enunciado":"Pide una cédula y muestra el nombre, el apellido y el código de la materia de esa persona. Si no está, muestra «No está en el archivo».","pista":"Usa split(\",\") y compara con partes[0]. Usa una variable encontrado = False que cambie a True cuando la encuentres.","solucion":"cedula = input(\"Ingrese la cedula: \")\nencontrado = False\ntry:\n    f = open(\"alumnos.txt\", \"r\")\n    for linea in f.readlines():\n        partes = linea.strip().split(\",\")\n        if partes[0] == cedula:\n            print(partes[3], partes[4], partes[1], partes[2], \"- materia\", partes[5])\n            encontrado = True\n    f.close()\n    if not encontrado:\n        print(\"No está en el archivo\")\nexcept:\n    print(\"hubo problemas\")","entrada":"31000555","salida":"Ingrese la cedula: 31000555\nEva Sofia Lopez Rey - materia 0790"},{"id":"e3","titulo":"Lista de una materia, ordenada y guardada","fuente":"Clase del 11-11","enunciado":"Pide el código de una materia, busca a todos los que la inscribieron, ordénalos alfabéticamente por apellido, muéstralos en columnas y guarda la lista en listado.txt.","pista":"Es el programa de la clase: las 3 listas con append, la función ordenar, a, b, c = ordenar(apellidos, nombres, cedulas), un for con ljust y al final el archivo con \"w\".","solucion":"def ordenar(lista1, lista2, lista3):\n    for i in range(len(lista1) - 1):\n        for j in range(i + 1, len(lista1)):\n            if lista1[i] > lista1[j]:\n                lista1[i], lista1[j] = lista1[j], lista1[i]\n                lista2[i], lista2[j] = lista2[j], lista2[i]\n                lista3[i], lista3[j] = lista3[j], lista3[i]\n    return lista1, lista2, lista3\n\ncodigo = input(\"Dame el codigo de la asignatura: \")\ncedulas = []\nnombres = []\napellidos = []\ntry:\n    f = open(\"alumnos.txt\", \"r\")\n    for linea in f.readlines():\n        partes = linea.strip().split(\",\")\n        if partes[5][-4:] == codigo:\n            cedulas.append(partes[0])\n            nombres.append(partes[3] + \" \" + partes[4])\n            apellidos.append(partes[1] + \" \" + partes[2])\n    f.close()\n    a, b, c = ordenar(apellidos, nombres, cedulas)\n    for i in range(len(a)):\n        print(a[i].ljust(15), b[i].ljust(15), c[i])\n    m = open(\"listado.txt\", \"w\")\n    m.write(\"listado\" + \"\\n\")\n    m.write(\"codigo \" + codigo + \"\\n\")\n    for i in range(len(a)):\n        m.write(a[i].ljust(15) + b[i].ljust(15) + c[i] + \"\\n\")\n    m.close()\nexcept:\n    print(\"hubo problemas\")","entrada":"0790","salida":"Dame el codigo de la asignatura: 0790\nDiaz Paz        Juan Carlos     29555222\nLopez Rey       Eva Sofia       31000555\nPerez Gil       Ana Maria       30474035"}],"archivo":"30474035,Perez,Gil,Ana,Maria,0790\n28999111,Arias,Mora,Luis,Jose,0760\n31000555,Lopez,Rey,Eva,Sofia,0790\n29555222,Diaz,Paz,Juan,Carlos,0790\n"};
+(function(){
+"use strict";
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt=s=>esc(s).replace(/`([^`]+)`/g,"<code>$1</code>").replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>");
+const KW=new Set("def for in range if elif else return while import and or not True False None print len math random append sum round".split(" "));
+function hl(src){
+  let out="",i=0;const n=src.length;
+  while(i<n){
+    const c=src[i];
+    if(c==="#"){let j=src.indexOf("\n",i);if(j<0)j=n;out+='<span class="c">'+esc(src.slice(i,j))+"</span>";i=j;continue;}
+    if(c==='"'||c==="'"){let j=i+1;while(j<n&&src[j]!==c&&src[j]!=="\n")j++;j=Math.min(j+1,n);out+='<span class="s">'+esc(src.slice(i,j))+"</span>";i=j;continue;}
+    if(/[0-9]/.test(c)&&!/[\w]/.test(src[i-1]||"")){let j=i;while(j<n&&/[0-9.e]/.test(src[j]))j++;out+='<span class="nu">'+src.slice(i,j)+"</span>";i=j;continue;}
+    if(/[A-Za-z_]/.test(c)){let j=i;while(j<n&&/\w/.test(src[j]))j++;const w=src.slice(i,j);out+=KW.has(w)?'<span class="k">'+w+"</span>":esc(w);i=j;continue;}
+    out+=esc(c);i++;
+  }
+  return out;
+}
+const codigo=(src,solo)=>'<pre class="code'+(solo?" solo":"")+'"><code>'+hl(src)+"</code></pre>";
+const salidaHTML=t=>'<div class="salida"><span class="lab">Salida</span><pre>'+esc(t)+"</pre></div>";
+function barajar(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+
+/* ---------- estado guardado (solo comodidad) ---------- */
+const KEY="archivos-python-v1";
+let S={lec:{},examen:null,juegos:{}};
+try{const r=localStorage.getItem(KEY);if(r){const p=JSON.parse(r);if(p&&typeof p==="object")S=Object.assign(S,p);}}catch(e){}
+function guardar(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+
+/* ---------- matriz dibujada ---------- */
+function dibujar(m,o){
+  o=o||{};const filas=m.length,cols=m[0].length;
+  const cls=o.cls||(()=>"");const bot=!!o.botones;
+  let h='<div class="matriz" style="grid-template-columns:auto repeat('+cols+',auto)"'+(o.id?' id="'+o.id+'"':"")+(o.label?' role="group" aria-label="'+esc(o.label)+'"':"")+'>';
+  h+='<span class="lbl"></span>';
+  for(let j=0;j<cols;j++)h+=(o.colBtn?'<button type="button" class="lbl'+(o.colOn===j?" on":"")+'" data-col="'+j+'" aria-label="Columna '+j+'">':'<span class="lbl'+(o.colOn===j?" on":"")+'">')+j+(o.colBtn?"</button>":"</span>");
+  for(let i=0;i<filas;i++){
+    h+=(o.rowBtn?'<button type="button" class="lbl'+(o.rowOn===i?" on":"")+'" data-row="'+i+'" aria-label="Fila '+i+'">':'<span class="lbl'+(o.rowOn===i?" on":"")+'">')+i+(o.rowBtn?"</button>":"</span>");
+    for(let j=0;j<cols;j++){
+      const v=m[i][j];const c=cls(i,j);
+      h+=bot?'<button type="button" class="celda '+c+'" data-i="'+i+'" data-j="'+j+'" aria-label="Fila '+i+', columna '+j+'">'+(v===null?"":v)+"</button>"
+            :'<span class="celda '+c+'">'+(v===null?"":v)+"</span>";
+    }
+  }
+  return h+"</div>";
+}
+
+/* ---------- preguntas (lecciones y examen) ---------- */
+function pregunta(q,cont,alResponder){
+  const box=document.createElement("div");box.className="preg";cont.appendChild(box);
+  let hecho=false;
+  const fin=(bien,extra)=>{
+    hecho=true;
+    const fb=document.createElement("div");fb.className="fb "+(bien?"ok":"bad");fb.setAttribute("role","status");
+    fb.innerHTML="<h4>"+(bien?"Correcto":"No es así")+"</h4>"+(extra||"")+"<p>"+fmt(q.exp)+"</p>";
+    box.appendChild(fb);
+    if(alResponder)alResponder(bien,box);
+  };
+  const boton=()=>{const b=document.createElement("button");b.type="button";b.className="btn";b.textContent="Comprobar";b.disabled=true;return b;};
+  if(q.t==="elige"||q.t==="salida"){
+    const todas=q.t==="salida"?[q.correcta].concat(q.ops):q.ops.slice();
+    const orden=barajar(todas.map((_,i)=>i));
+    box.innerHTML='<p class="q">'+fmt(q.q)+"</p>"+(q.usa?'<p class="usa">El código usa '+fmt(q.usa)+".</p>":"")+(q.code?codigo(q.code,true):"")+'<div class="ops'+(q.t==="salida"?" salidas":"")+'">'+orden.map(i=>'<button type="button" class="op-b" data-i="'+i+'" aria-pressed="false"><span class="v'+(q.t==="salida"?" mono":"")+'">'+(q.t==="salida"?esc(todas[i]):fmt(todas[i]))+"</span></button>").join("")+"</div>";
+    let sel=null;const b=boton();box.appendChild(b);
+    $$(".op-b",box).forEach(x=>x.addEventListener("click",()=>{if(hecho)return;$$(".op-b",box).forEach(y=>y.setAttribute("aria-pressed","false"));x.setAttribute("aria-pressed","true");sel=+x.dataset.i;b.disabled=false;}));
+    b.addEventListener("click",()=>{
+      const bien=sel===0;b.remove();
+      $$(".op-b",box).forEach(x=>{x.disabled=true;const i=+x.dataset.i;if(i===0)x.classList.add("ok");else if(i===sel)x.classList.add("bad");});
+      fin(bien,bien||q.t!=="elige"?"":"<p>La respuesta era: "+fmt(todas[0])+"</p>");
+    });
+  }else if(q.t==="completa"){
+    const partes=q.code.split("___");const orden=barajar(q.ops.map((_,i)=>i));
+    const pinta=v=>'<pre class="code solo"><code>'+hl(partes[0])+'<span class="hueco'+(v==null?" vacio":"")+'">'+(v==null?"___":esc(v))+"</span>"+hl(partes[1])+"</code></pre>";
+    box.innerHTML='<p class="q">'+fmt(q.q)+'</p><div class="cod">'+pinta(null)+'</div><div class="fichas">'+orden.map(i=>'<button type="button" class="ficha" data-i="'+i+'" aria-pressed="false">'+esc(q.ops[i])+"</button>").join("")+"</div>";
+    let sel=null;const b=boton();box.appendChild(b);
+    $$(".ficha",box).forEach(x=>x.addEventListener("click",()=>{if(hecho)return;$$(".ficha",box).forEach(y=>y.setAttribute("aria-pressed","false"));x.setAttribute("aria-pressed","true");sel=+x.dataset.i;$(".cod",box).innerHTML=pinta(q.ops[sel]);b.disabled=false;}));
+    b.addEventListener("click",()=>{
+      const bien=sel===0;b.remove();$$(".ficha",box).forEach(x=>x.disabled=true);
+      $(".cod",box).innerHTML=pinta(q.ops[0]);$(".hueco",box).classList.add(bien?"ok":"bad");
+      fin(bien,(bien?"":"<p>Lo correcto es <code>"+esc(q.ops[0])+"</code>.</p>")+"<pre>"+esc(q.salida)+"</pre>");
+    });
+  }else if(q.t==="ordena"){
+    const bl=q.lineas.map((l,i)=>({id:"s"+i,t:l[0],n:l[1]})).concat(q.trampas.map((t,i)=>({id:"t"+i,t:t[0],n:t[1],razon:t[2]})));
+    const B=Object.fromEntries(bl.map(x=>[x.id,x]));
+    let banco=barajar(bl.map(x=>x.id)),prog=[];
+    box.innerHTML='<p class="q">'+fmt(q.q)+'</p><p style="font-size:.9rem;color:var(--muted)">Toca los bloques en orden. Cada uno ya trae su sangría. '+q.trampas.length+' bloques sobran.</p><span class="zona-t">Tu programa</span><div class="prog"></div><span class="zona-t">Bloques</span><div class="banco"></div>';
+    const b=boton();box.appendChild(b);
+    const blq=x=>'<button type="button" class="blq" data-b="'+x.id+'"><span class="ind" style="--n:'+x.n+'"></span><span class="bt">'+hl(x.t)+"</span></button>";
+    function pinta(){
+      $(".prog",box).innerHTML=prog.length?prog.map(id=>blq(B[id])).join(""):'<span class="vacio-t">Aquí se va armando el programa.</span>';
+      $(".banco",box).innerHTML=banco.length?banco.map(id=>blq(B[id])).join(""):'<span class="vacio-t">No quedan bloques.</span>';
+      $$(".prog .blq",box).forEach(x=>x.addEventListener("click",()=>{if(hecho)return;prog=prog.filter(y=>y!==x.dataset.b);banco.push(x.dataset.b);pinta();}));
+      $$(".banco .blq",box).forEach(x=>x.addEventListener("click",()=>{if(hecho)return;banco=banco.filter(y=>y!==x.dataset.b);prog.push(x.dataset.b);pinta();}));
+      b.disabled=prog.length===0;
+    }
+    pinta();
+    b.addEventListener("click",()=>{
+      b.remove();let bad=-1,msg="";
+      for(let i=0;i<prog.length;i++){const x=B[prog[i]];if(x.razon){bad=i;msg="La línea "+(i+1)+" sobra. "+x.razon;break;}if(prog[i]!=="s"+i){bad=i;msg="La línea "+(i+1)+" no va ahí.";break;}}
+      if(bad<0&&prog.length<q.lineas.length){bad=prog.length;msg="Faltan líneas.";}
+      $$(".prog .blq",box).forEach((x,i)=>{if(bad<0)x.classList.add("ok");else if(i===bad)x.classList.add("bad");});
+      const sol=q.lineas.map(l=>"    ".repeat(l[1])+l[0]).join("\n");
+      fin(bad<0,(bad<0?"":"<p>"+fmt(msg)+"</p><pre>"+esc(sol)+"</pre>"));
+    });
+  }
+  return box;
+}
+
+/* ---------- widgets ---------- */
+const W={};
+W.explorar=function(el){
+  const m=[[1,2,3],[4,5,6],[7,8,9]];let sel={i:1,j:2},fila=null;
+  function pinta(){
+    const cls=(i,j)=>fila!==null?(i===fila?"sel":""):(i===sel.i&&j===sel.j?"sel":(i===sel.i||j===sel.j?"tinte":""));
+    el.innerHTML='<p class="wt">Toca una celda o el número de una fila</p>'+dibujar(m,{botones:true,rowBtn:true,cls,rowOn:fila!==null?fila:sel.i,colOn:fila!==null?null:sel.j,label:"matrix"})+
+      '<div class="lectura" aria-live="polite">'+(fila!==null?"matrix["+fila+"] = ["+m[fila].join(", ")+"]   ← la fila completa":"matrix["+sel.i+"]["+sel.j+"] = "+m[sel.i][sel.j]+"   ← fila "+sel.i+", columna "+sel.j)+"</div>";
+    $$(".celda",el).forEach(b=>b.addEventListener("click",()=>{fila=null;sel={i:+b.dataset.i,j:+b.dataset.j};pinta();}));
+    $$("[data-row]",el).forEach(b=>b.addEventListener("click",()=>{fila=+b.dataset.row;pinta();}));
+  }
+  pinta();
+};
+W.recorrer=function(el){
+  const m=[[2,10,19,61],[21,13,35,2],[61,71,56,4],[47,85,61,19]];
+  const pasos=[];let mx=m[0][0],pos=[0,0];
+  for(let i=0;i<4;i++)for(let j=0;j<4;j++){let cambia=false;if(mx<m[i][j]){mx=m[i][j];pos=[i,j];cambia=true;}pasos.push({i,j,mx,pos:pos.slice(),cambia});}
+  let k=0,timer=null;
+  function pinta(){
+    const p=pasos[k];
+    const cls=(i,j)=>{let c="";const idx=i*4+j;if(idx<k)c="visto";if(i===p.i&&j===p.j)c="sel";if(i===p.pos[0]&&j===p.pos[1])c+=" max";return c;};
+    el.innerHTML='<p class="wt">Paso a paso: <code>maximo_matrix(matrix)</code></p>'+dibujar(m,{cls,rowOn:p.i,colOn:p.j,label:"matrix"})+
+      '<div class="vars"><span>i = <b>'+p.i+'</b></span><span>j = <b>'+p.j+'</b></span><span>m[i][j] = <b>'+m[p.i][p.j]+'</b></span><span>maximo = <b>'+p.mx+"</b></span></div>"+
+      '<p class="ayuda" aria-live="polite">'+(k===0?"Empieza con maximo = m[0][0] = 2.":p.cambia?"¿maximo < "+m[p.i][p.j]+"? Sí: maximo pasa a "+p.mx+".":"¿maximo < "+m[p.i][p.j]+"? No: maximo sigue en "+p.mx+".")+(k===pasos.length-1?" Terminó: devuelve "+p.mx+".":"")+"</p>"+
+      '<div class="fila-ctrl"><button type="button" class="btn chico" id="rc-paso"'+(k===pasos.length-1?" disabled":"")+'>Siguiente paso</button><button type="button" class="btn sec chico" id="rc-play">'+(timer?"Pausa":"Reproducir")+'</button><button type="button" class="btn sec chico" id="rc-ini">Reiniciar</button></div>';
+    $("#rc-paso",el).addEventListener("click",()=>{if(k<pasos.length-1){k++;pinta();}});
+    $("#rc-ini",el).addEventListener("click",()=>{parar();k=0;pinta();});
+    $("#rc-play",el).addEventListener("click",()=>{if(timer){parar();pinta();return;}if(k===pasos.length-1)k=0;timer=setInterval(()=>{if(k<pasos.length-1){k++;pinta();}else{parar();pinta();}},700);pinta();});
+  }
+  function parar(){clearInterval(timer);timer=null;}
+  el._parar=parar;pinta();
+};
+W.suma=function(el){
+  const A=[[1,2],[3,4]],B=[[10,11],[12,13]],C=A.map((f,i)=>f.map((v,j)=>v+B[i][j]));let s={i:1,j:0};
+  function pinta(){
+    const cls=(i,j)=>i===s.i&&j===s.j?"sel":"";
+    el.innerHTML='<p class="wt">Toca una celda del resultado</p><div class="ecu"><figure>'+dibujar(A,{cls})+'<figcaption>a</figcaption></figure><span class="op">+</span><figure>'+dibujar(B,{cls})+'<figcaption>b</figcaption></figure><span class="op">=</span><figure>'+dibujar(C,{cls,botones:true})+'<figcaption>c</figcaption></figure></div>'+
+      '<div class="lectura" aria-live="polite">c['+s.i+']['+s.j+'] = a['+s.i+']['+s.j+'] + b['+s.i+']['+s.j+'] = '+A[s.i][s.j]+" + "+B[s.i][s.j]+" = "+C[s.i][s.j]+"</div>";
+    $$("button.celda",el).forEach(b=>b.addEventListener("click",()=>{s={i:+b.dataset.i,j:+b.dataset.j};pinta();}));
+  }
+  pinta();
+};
+function ordenZigzag(n,m,modo){
+  const o=[];
+  if(modo==="zz2"){for(let i=0;i<Math.floor(n/2);i++){for(let j=0;j<m;j++)o.push([i,j]);for(let j=m-1;j>=0;j--)o.push([n-i-1,j]);}}
+  else{for(let i=0;i<n;i+=2){for(let j=0;j<m;j++)o.push([i,j]);if(i+1!==n)for(let j=m-1;j>=0;j--)o.push([i+1,j]);}}
+  return o;
+}
+W.zigzag=function(el){
+  let n=4,m=5,modo="zz",orden=ordenZigzag(n,m,modo),k=orden.length,timer=null;
+  function parar(){clearInterval(timer);timer=null;}
+  function pinta(){
+    const g=Array.from({length:n},()=>Array(m).fill(0));for(let t=0;t<k;t++){const [i,j]=orden[t];g[i][j]=t+1;}
+    const ult=k>0?orden[k-1]:null;
+    const cls=(i,j)=>(ult&&ult[0]===i&&ult[1]===j)?"sel":"";
+    const opt=(a,b)=>Array.from({length:b-a+1},(_,x)=>a+x);
+    el.innerHTML='<p class="wt">Llenado con el contador k</p><div class="fila-ctrl"><label for="zz-modo" class="ayuda">Versión</label><select id="zz-modo"><option value="zz"'+(modo==="zz"?" selected":"")+'>zig_zag</option><option value="zz2"'+(modo==="zz2"?" selected":"")+'>zig_zag_2</option></select>'+
+      '<label for="zz-n" class="ayuda">Filas</label><select id="zz-n">'+opt(2,6).map(x=>"<option"+(x===n?" selected":"")+">"+x+"</option>").join("")+'</select><label for="zz-m" class="ayuda">Columnas</label><select id="zz-m">'+opt(2,6).map(x=>"<option"+(x===m?" selected":"")+">"+x+"</option>").join("")+"</select></div>"+
+      dibujar(g.map(f=>f.map(v=>v===0&&k<orden.length?null:v)),{cls,rowOn:ult?ult[0]:null,colOn:ult?ult[1]:null,label:"c"})+
+      '<p class="ayuda" aria-live="polite">'+(k===0?"Todas las celdas en 0. Dale a Reproducir.":"k = "+k+" va en c["+ult[0]+"]["+ult[1]+"]"+(k===orden.length?(orden.length<n*m?". Terminó: la fila del medio quedó en 0.":". Terminó."):""))+"</p>"+
+      '<div class="fila-ctrl"><button type="button" class="btn chico" id="zz-play">'+(timer?"Pausa":"Reproducir")+'</button><button type="button" class="btn sec chico" id="zz-paso"'+(k>=orden.length?" disabled":"")+'>Un paso</button><button type="button" class="btn sec chico" id="zz-ini">Vaciar</button></div>';
+    const cambio=()=>{parar();modo=$("#zz-modo",el).value;n=+$("#zz-n",el).value;m=+$("#zz-m",el).value;orden=ordenZigzag(n,m,modo);k=orden.length;pinta();};
+    ["#zz-modo","#zz-n","#zz-m"].forEach(s=>$(s,el).addEventListener("change",cambio));
+    $("#zz-ini",el).addEventListener("click",()=>{parar();k=0;pinta();});
+    $("#zz-paso",el).addEventListener("click",()=>{if(k<orden.length){k++;pinta();}});
+    $("#zz-play",el).addEventListener("click",()=>{if(timer){parar();pinta();return;}if(k>=orden.length)k=0;timer=setInterval(()=>{if(k<orden.length){k++;pinta();}else{parar();pinta();}},420);pinta();});
+  }
+  el._parar=parar;pinta();
+};
+function estad(M){
+  const f=M.length,c=M[0].length;
+  const pe=M.map(r=>r.reduce((a,b)=>a+b,0)/c);
+  const pn=[],de=[];
+  for(let j=0;j<c;j++){let s=0;for(let i=0;i<f;i++)s+=M[i][j];pn.push(s/f);let q=0;for(let i=0;i<f;i++)q+=(M[i][j]-pn[j])**2;de.push(Math.sqrt(q/(f-1)));}
+  return {pe,pn,de};
+}
+W.notas=function(el){
+  let M=[[4,10,10,15],[12,8,15,17],[10,14,9,11],[18,16,12,20],[6,11,14,9]];let sel={tipo:"fila",k:1};
+  function pinta(){
+    const {pe,pn,de}=estad(M);const c=M[0].length;
+    const onF=i=>sel.tipo==="fila"&&sel.k===i, onC=j=>sel.tipo==="col"&&sel.k===j;
+    let h='<p class="wt">Toca un estudiante o una evaluación</p><div class="notas-t"><table><thead><tr><th></th>';
+    for(let j=0;j<c;j++)h+='<th><button type="button" data-col="'+j+'"'+(onC(j)?' class="on" style="padding:2px 6px;border-radius:6px"':"")+'>P'+(j+1)+"</button></th>";
+    h+="<th>Promedio</th></tr></thead><tbody>";
+    M.forEach((r,i)=>{h+='<tr><th><button type="button" data-row="'+i+'"'+(onF(i)?' class="on" style="padding:2px 6px;border-radius:6px"':"")+'>Est. '+(i+1)+"</button></th>"+r.map((v,j)=>'<td class="n'+(onF(i)||onC(j)?" tin":"")+'">'+v+"</td>").join("")+'<td class="res'+(onF(i)?" on":"")+'">'+pe[i].toFixed(2)+"</td></tr>";});
+    h+='<tr><th>Prom. gen.</th>'+pn.map((v,j)=>'<td class="res'+(onC(j)?" on":"")+'">'+v.toFixed(2)+"</td>").join("")+"<td></td></tr>";
+    h+='<tr><th>Desv. est.</th>'+de.map((v,j)=>'<td class="res'+(onC(j)?" on":"")+'">'+v.toFixed(2)+"</td>").join("")+"<td></td></tr></tbody></table></div>";
+    let lec;
+    if(sel.tipo==="fila"){const r=M[sel.k];lec="Est. "+(sel.k+1)+" (fila "+sel.k+"): ("+r.join(" + ")+") / "+c+" = "+pe[sel.k].toFixed(2);}
+    else{const col=M.map(r=>r[sel.k]);lec="P"+(sel.k+1)+" (columna "+sel.k+"): promedio ("+col.join(" + ")+") / "+M.length+" = "+pn[sel.k].toFixed(2)+" · desviación "+de[sel.k].toFixed(2);}
+    h+='<div class="lectura" aria-live="polite">'+lec+'</div><div class="fila-ctrl"><button type="button" class="btn sec chico" id="nt-azar">Notas al azar del 1 al 20</button><button type="button" class="btn sec chico" id="nt-clase">Volver a las del ejemplo</button></div>';
+    el.innerHTML=h;
+    $$("[data-row]",el).forEach(b=>b.addEventListener("click",()=>{sel={tipo:"fila",k:+b.dataset.row};pinta();}));
+    $$("[data-col]",el).forEach(b=>b.addEventListener("click",()=>{sel={tipo:"col",k:+b.dataset.col};pinta();}));
+    $("#nt-azar",el).addEventListener("click",()=>{M=M.map(r=>r.map(()=>rnd(1,20)));pinta();});
+    $("#nt-clase",el).addEventListener("click",()=>{M=[[4,10,10,15],[12,8,15,17],[10,14,9,11],[18,16,12,20],[6,11,14,9]];pinta();});
+  }
+  pinta();
+};
+W.azar=function(el){
+  let modo="randint",cuenta=Array(20).fill(0),total=0,ultimos=[];
+  function tirar(n){for(let t=0;t<n;t++){const v=modo==="randint"?rnd(1,20):rnd(1,19);cuenta[v-1]++;total++;ultimos.push(v);}ultimos=ultimos.slice(-10);pinta();}
+  function pinta(){
+    const mx=Math.max(1,...cuenta);
+    el.innerHTML='<p class="wt">Prueba el azar</p><div class="fila-ctrl"><label for="az-modo" class="ayuda">Función</label><select id="az-modo"><option value="randint"'+(modo==="randint"?" selected":"")+'>random.randint(1, 20)</option><option value="randrange"'+(modo==="randrange"?" selected":"")+'>random.randrange(1, 20)</option></select></div>'+
+      '<div class="fila-ctrl"><button type="button" class="btn chico" id="az-1">Sacar 1 número</button><button type="button" class="btn sec chico" id="az-1000">Sacar 1000</button><button type="button" class="btn sec chico" id="az-0">Borrar</button></div>'+
+      '<div class="lectura" aria-live="polite">'+(total?"Últimos: "+ultimos.join(", ")+" · total "+total+" · ¿salió el 20? "+(cuenta[19]?"sí":"no"):"Todavía no hay tiradas.")+"</div>"+
+      '<div><div class="barras" aria-hidden="true">'+cuenta.map(v=>'<div style="height:'+(v/mx*100)+'%"></div>').join("")+'</div><div class="barras-eje" aria-hidden="true">'+cuenta.map((_,i)=>"<span>"+(i+1)+"</span>").join("")+"</div></div>"+
+      '<p class="ayuda">Con <code>randint</code> aparecen del 1 al 20. Con <code>randrange(1, 20)</code> el 20 nunca sale, igual que en <code>range</code>.</p>';
+    $("#az-modo",el).addEventListener("change",e=>{modo=e.target.value;cuenta=Array(20).fill(0);total=0;ultimos=[];pinta();});
+    $("#az-1",el).addEventListener("click",()=>tirar(1));
+    $("#az-1000",el).addEventListener("click",()=>tirar(1000));
+    $("#az-0",el).addEventListener("click",()=>{cuenta=Array(20).fill(0);total=0;ultimos=[];pinta();});
+  }
+  tirar(1000);
+};
+
+W.slicing=function(el){
+  const t="esto es una prueba";let a=3,b=8,modo="ab";
+  function pinta(){
+    const n=t.length;let ini=a,fin=b;
+    if(modo==="ini"){ini=0;}if(modo==="fin"){fin=n;}if(modo==="neg"){ini=n-4;fin=n;}
+    const expr=modo==="ab"?"a["+a+":"+b+"]":modo==="ini"?"a[:"+b+"]":modo==="fin"?"a["+a+":]":"a[-4:]";
+    let h='<p class="wt">Mueve los números y mira qué pedazo se corta</p><div class="fila-ctrl"><label for="sl-modo" class="ayuda">Forma</label><select id="sl-modo"><option value="ab"'+(modo==="ab"?" selected":"")+'>a[inicio:fin]</option><option value="ini"'+(modo==="ini"?" selected":"")+'>a[:fin]</option><option value="fin"'+(modo==="fin"?" selected":"")+'>a[inicio:]</option><option value="neg"'+(modo==="neg"?" selected":"")+'>a[-4:]</option></select>';
+    if(modo==="ab"||modo==="fin")h+='<label for="sl-a" class="ayuda">inicio</label><select id="sl-a">'+Array.from({length:n},(_,x)=>"<option"+(x===a?" selected":"")+">"+x+"</option>").join("")+"</select>";
+    if(modo==="ab"||modo==="ini")h+='<label for="sl-b" class="ayuda">fin</label><select id="sl-b">'+Array.from({length:n+1},(_,x)=>"<option"+(x===b?" selected":"")+">"+x+"</option>").join("")+"</select>";
+    h+='</div><div class="tira" role="img" aria-label="'+esc(t)+'">';
+    for(let x=0;x<n;x++){const on=x>=ini&&x<fin;h+='<span class="ch'+(on?" on":"")+'"><b>'+(t[x]===" "?"␣":esc(t[x]))+"</b><i>"+x+"</i>"+(modo==="neg"?"<i>"+(x-n)+"</i>":"")+"</span>";}
+    h+='</div><div class="lectura" aria-live="polite">'+expr+' = "'+esc(t.slice(ini,fin))+'"  ← '+(fin-ini)+" caracteres, desde la posición "+ini+" hasta la "+(fin-1)+(modo==="ab"?" (la "+b+" no entra)":"")+"</div>";
+    el.innerHTML=h;
+    $("#sl-modo",el).addEventListener("change",e=>{modo=e.target.value;pinta();});
+    const A=$("#sl-a",el),Bs=$("#sl-b",el);
+    if(A)A.addEventListener("change",e=>{a=+e.target.value;if(b<a)b=a;pinta();});
+    if(Bs)Bs.addEventListener("change",e=>{b=+e.target.value;if(a>b)a=b;pinta();});
+  }
+  pinta();
+};
+W.ordenar=function(el){
+  const ini=[["Perez Gil","Ana","30474035"],["Arias Mora","Luis","28999111"],["Lopez Rey","Eva","31000555"],["Diaz Paz","Juan","29555222"]];
+  const pasos=[];let L=ini.map(r=>r.slice());
+  pasos.push({L:L.map(r=>r.slice()),i:null,j:null,txt:"Las tres listas como llegan del archivo. Cada fila es una persona."});
+  for(let i=0;i<L.length-1;i++)for(let j=i+1;j<L.length;j++){
+    const cambia=L[i][0]>L[j][0];
+    const txt='i = '+i+', j = '+j+': ¿"'+L[i][0]+'" > "'+L[j][0]+'"? '+(cambia?"Sí, va después en el abecedario: se intercambian las dos filas completas.":"No: se quedan así.");
+    if(cambia){const t=L[i];L[i]=L[j];L[j]=t;}
+    pasos.push({L:L.map(r=>r.slice()),i,j,cambia,txt});
+  }
+  pasos.push({L:L.map(r=>r.slice()),i:null,j:null,txt:"Terminó: ordenados por apellido y cada nombre y cédula siguen con su persona."});
+  let k=0;
+  function pinta(){
+    const p=pasos[k];
+    let h='<p class="wt">Paso a paso: ordenar(apellidos, nombres, cedulas)</p><div class="notas-t"><table><thead><tr><th>posición</th><th>apellidos (lista1)</th><th>nombres (lista2)</th><th>cedulas (lista3)</th></tr></thead><tbody>';
+    p.L.forEach((r,x)=>{const on=x===p.i||x===p.j;h+="<tr><th>"+x+"</th>"+r.map(v=>'<td class="n'+(on?(p.cambia?" on":" tin"):"")+'" style="text-align:left">'+esc(v)+"</td>").join("")+"</tr>";});
+    h+='</tbody></table></div><p class="ayuda" aria-live="polite">'+esc(p.txt)+'</p><div class="fila-ctrl"><button type="button" class="btn chico" id="or-paso"'+(k===pasos.length-1?" disabled":"")+'>Siguiente paso</button><button type="button" class="btn sec chico" id="or-ini">Reiniciar</button><span class="ayuda">Paso '+k+" de "+(pasos.length-1)+"</span></div>";
+    el.innerHTML=h;
+    $("#or-paso",el).addEventListener("click",()=>{if(k<pasos.length-1){k++;pinta();}});
+    $("#or-ini",el).addEventListener("click",()=>{k=0;pinta();});
+  }
+  pinta();
+};
+function formula(){
+  return '<div class="formula" role="img" aria-label="sigma igual a la raíz de la suma de (x sub i menos el promedio) al cuadrado, dividida entre n menos 1"><span>σ =&nbsp;</span><span class="raiz"><span class="sig">√</span><span class="bajo"><span class="frac"><span>Σ<sub>i=1</sub><sup>n</sup> (x<sub>i</sub> − x̄)<sup>2</sup></span><span>n − 1</span></span></span></span></div>';
+}
+
+/* ---------- vistas ---------- */
+let widgetsVivos=[];
+function limpiar(){widgetsVivos.forEach(w=>w._parar&&w._parar());widgetsVivos=[];}
+let lecActual=0;
+try{const v=+localStorage.getItem(KEY+"-lec");if(v>=0&&v<DATA.lecciones.length)lecActual=v;}catch(e){}
+function verAprende(){
+  const L=DATA.lecciones,l=L[lecActual];
+  let h='<div class="intro"><h2>Aprende</h2><p>Lo que se vio el lunes 9 y el miércoles 11 (trabajo con archivos), explicado paso a paso en '+L.length+' lecciones cortas. Empieza por la 1. Al final de cada una hay dos preguntas fáciles para comprobar.</p></div><div class="aprende"><nav class="indice" aria-label="Lecciones"><ol>';
+  L.forEach((x,i)=>{h+='<li><button type="button" data-lec="'+i+'" aria-current="'+(i===lecActual)+'" class="'+(S.lec[x.id]?"hecho":"")+'"><span class="n">'+(S.lec[x.id]?"✓":i+1)+"</span>"+esc(x.corto)+"</button></li>";});
+  h+='</ol></nav><article class="leccion"><span class="eti">Lección '+(lecActual+1)+" de "+L.length+"</span><h2>"+esc(l.titulo)+"</h2>";
+  l.bloques.forEach((b,k)=>{
+    if(b.tipo==="p")h+="<p>"+fmt(b.texto)+"</p>";
+    else if(b.tipo==="h")h+="<h3>"+fmt(b.texto)+"</h3>";
+    else if(b.tipo==="lista")h+="<ul>"+b.items.map(x=>"<li>"+fmt(x)+"</li>").join("")+"</ul>";
+    else if(b.tipo==="ojo")h+='<div class="ojo"><span class="ic" aria-hidden="true">!</span><div><b>Ojo</b><p>'+fmt(b.texto)+"</p></div></div>";
+    else if(b.tipo==="code")h+='<div class="bloque-code">'+(b.titulo||b.usa?'<span class="tit">'+(b.titulo?fmt(b.titulo):"")+(b.usa?'<span class="usa">'+(b.titulo?" · ":"")+"usa "+fmt(b.usa)+"</span>":"")+"</span>":"")+codigo(b.code,!b.salida)+(b.salida?salidaHTML(b.salida):"")+"</div>";
+    else if(b.tipo==="widget")h+='<div class="widget" data-w="'+b.w+'"></div>';
+    else if(b.tipo==="formula")h+=formula();
+    else if(b.tipo==="archivo")h+='<div class="bloque-code"><span class="tit">'+esc(b.nombre)+' · cada línea: cédula, apellido, apellido, nombre, nombre, código</span><pre class="code solo"><code>'+b.texto.split("\n").map((l,n)=>'<span class="c">'+n+'  </span>'+esc(l)).join("\n")+"</code></pre></div>";
+    else if(b.tipo==="tabla")h+='<div class="tabla"><table><thead><tr>'+b.cab.map(c=>"<th>"+esc(c)+"</th>").join("")+"</tr></thead><tbody>"+b.filas.map(f=>"<tr>"+f.map(c=>"<td>"+fmt(c)+"</td>").join("")+"</tr>").join("")+"</tbody></table></div>";
+    else if(b.tipo==="nota")h+='<div class="nota"><p>'+fmt(b.texto)+'</p><button type="button" class="btn sec chico copiar" data-copiar="'+k+'">Copiar el texto</button></div>';
+  });
+  h+='<h3>Comprueba</h3><div class="chequeo" id="chequeo"></div><div class="navlec">'+(lecActual>0?'<button type="button" class="btn sec" data-lec="'+(lecActual-1)+'">← '+esc(L[lecActual-1].corto)+"</button>":"<span></span>")+
+     (lecActual<L.length-1?'<button type="button" class="btn" data-lec="'+(lecActual+1)+'">Siguiente: '+esc(L[lecActual+1].corto)+" →</button>":'<button type="button" class="btn" data-ir="juegos">Ir a los juegos →</button>')+"</div></article></div>";
+  $("#vista").innerHTML=h;
+  $$("[data-w]").forEach(el=>{W[el.dataset.w](el);widgetsVivos.push(el);});
+  let bien=0;const ch=$("#chequeo");
+  l.chequeo.forEach(q=>pregunta(q,ch,ok=>{if(ok)bien++;if(bien===l.chequeo.length&&!S.lec[l.id]){S.lec[l.id]=true;guardar();const b=$('.indice [data-lec="'+lecActual+'"]');if(b){b.classList.add("hecho");$(".n",b).textContent="✓";}}}));
+  $$("[data-lec]").forEach(b=>b.addEventListener("click",()=>{limpiar();lecActual=+b.dataset.lec;try{localStorage.setItem(KEY+"-lec",lecActual);}catch(e){}verAprende();window.scrollTo({top:0});}));
+  $$("[data-copiar]").forEach(b=>b.addEventListener("click",()=>copiar(l.bloques[+b.dataset.copiar].texto,b)));
+}
+function copiar(txt,btn){
+  const ok=()=>{const t=btn.textContent;btn.textContent="Copiado";setTimeout(()=>{btn.textContent=t;},1500);};
+  try{navigator.clipboard.writeText(txt).then(ok,()=>seleccionar(btn));}catch(e){seleccionar(btn);}
+}
+function seleccionar(btn){const p=btn.parentElement.querySelector("p,pre");if(!p)return;const r=document.createRange();r.selectNodeContents(p);const s=getSelection();s.removeAllRanges();s.addRange(r);btn.textContent="Texto seleccionado: cópialo";}
+
+/* ---------- juegos ---------- */
+const JUEGOS=[
+  {id:"cortar",t:"Corta el texto",d:"Te muestro un texto y unos corchetes. Elige qué pedazo sale. Incluye números negativos y split.",mini:[4,5,6]},
+  {id:"orden",t:"Ordena a las personas",d:"Toca a las personas en orden alfabético por apellido. Fíjate cómo cada una se mueve completa, con su nombre y su cédula.",mini:[0,4,8,12,1,5,9,13]},
+];
+function verJuegos(){
+  let h='<div class="intro"><h2>Juegos</h2><p>Dos juegos cortos con lo más importante de estas clases: cortar textos con los corchetes y ordenar sin mezclar a las personas.</p></div><div class="tarjetas">';
+  JUEGOS.forEach(g=>{const r=S.juegos[g.id];h+='<button type="button" class="tarj" data-juego="'+g.id+'"><div class="mini" aria-hidden="true">'+Array.from({length:16},(_,i)=>"<i"+(g.mini.includes(i)?' class="on"':"")+"></i>").join("")+"</div><h3>"+g.t+"</h3><p>"+g.d+"</p>"+(r?'<span class="rec">Mejor resultado: '+r+"</span>":"")+"</button>";});
+  h+='</div><div id="juego" style="margin-top:22px"></div>';
+  $("#vista").innerHTML=h;
+  $$("[data-juego]").forEach(b=>b.addEventListener("click",()=>{({cortar:jCortar,orden:jOrden})[b.dataset.juego]($("#juego"));$("#juego").scrollIntoView({behavior:"smooth",block:"start"});}));
+}
+function finJuego(cont,id,txt,puntos,total,otra){
+  const prev=S.juegos[id];const nuevo=puntos+" de "+total;
+  if(!prev||parseInt(prev)<puntos){S.juegos[id]=nuevo;guardar();}
+  cont.innerHTML='<div class="final"><span class="grande">'+puntos+"<small> / "+total+"</small></span><p>"+txt+'</p><div class="fila-ctrl"><button type="button" class="btn" id="otra">Jugar otra vez</button><button type="button" class="btn sec" id="volver">Ver los juegos</button></div></div>';
+  $("#otra",cont).addEventListener("click",()=>otra(cont));
+  $("#volver",cont).addEventListener("click",()=>{verJuegos();window.scrollTo({top:0});});
+}
+const TEXTOS=["programacion","30474035,Perez,Ana","esto es una prueba","SEC01-0790","nombre propio","ingenieria"];
+function pyCorte(t,a,b){const n=t.length;const f=x=>x==null?null:(x<0?Math.max(0,n+x):Math.min(x,n));return t.slice(a==null?0:f(a),b==null?n:f(b));}
+function rondaCorte(){
+  const t=TEXTOS[rnd(0,TEXTOS.length-1)],n=t.length,tipo=rnd(0,4);let expr,res;
+  if(tipo===0){const a=rnd(0,n-4),b=rnd(a+2,Math.min(n,a+6));expr="t["+a+":"+b+"]";res=t.slice(a,b);}
+  else if(tipo===1){const b=rnd(2,Math.min(8,n-1));expr="t[:"+b+"]";res=t.slice(0,b);}
+  else if(tipo===2){const a=rnd(Math.max(1,n-7),n-2);expr="t["+a+":]";res=t.slice(a);}
+  else if(tipo===3){const k=rnd(2,5);expr="t[-"+k+":]";res=t.slice(n-k);}
+  else{if(t.includes(",")){const p=t.split(",");const k=rnd(0,p.length-1);expr='t.split(",")['+k+"]";res=p[k];}else{expr="t[-1]";res=t[n-1];}}
+  const ops=[res];const cand=[];
+  for(let d=-2;d<=2;d++)for(let e=-2;e<=2;e++){if(tipo===0){const m=expr.match(/\[(\d+):(\d+)\]/);cand.push(t.slice(+m[1]+d,+m[2]+e));}}
+  cand.push(res.slice(0,-1),res+t.charAt(t.indexOf(res)+res.length),t.slice(Math.max(0,t.indexOf(res)-1),t.indexOf(res)+res.length),res.slice(1),t.slice(0,res.length),t.slice(n-res.length-1));
+  if(tipo===4&&t.includes(","))t.split(",").forEach(x=>cand.push(x));
+  barajar(cand).forEach(c=>{if(c&&!ops.includes(c)&&ops.length<4)ops.push(c);});
+  return {t,expr,res,ops};
+}
+function jCortar(cont){
+  const R=10;let r=0,pts=0;
+  function ronda(){
+    if(r>=R){finJuego(cont,"cortar",pts===R?"Perfecto: ya cortas textos sin pensarlo.":pts>=7?"Bien. Recuerda que el segundo número no entra.":"Repasa la lección 2 con el cortador de colores y vuelve a jugar.",pts,R,jCortar);return;}
+    const q=rondaCorte();
+    let h='<div class="juego"><div class="marcador"><span class="pill">Ronda '+(r+1)+" de "+R+'</span><span class="pill esp">Aciertos: '+pts+'</span></div><div class="barra"><i style="width:'+(r/R*100)+'%"></i></div><div class="tira">'+q.t.split("").map((c,x)=>'<span class="ch"><b>'+(c===" "?"␣":esc(c))+"</b><i>"+x+"</i></span>").join("")+'</div><p class="consigna">t = "'+esc(q.t)+'" · ¿qué da <code>'+esc(q.expr)+'</code>?</p><div class="ops salidas">'+barajar(q.ops).map(o=>'<button type="button" class="op-b" data-o="'+esc(o)+'"><span class="v mono">"'+esc(o)+'"</span></button>').join("")+'</div><p class="ayuda" id="msg" aria-live="polite"></p></div>';
+    cont.innerHTML=h;let hecho=false;
+    $$(".op-b",cont).forEach(b=>b.addEventListener("click",()=>{
+      if(hecho)return;hecho=true;const bien=b.dataset.o===q.res;if(bien)pts++;
+      $$(".op-b",cont).forEach(x=>{x.disabled=true;if(x.dataset.o===q.res)x.classList.add("ok");});if(!bien)b.classList.add("bad");
+      $("#msg",cont).textContent=(bien?"Bien. ":"Era \""+q.res+"\". ")+(q.expr.includes("-")?"Los negativos cuentan desde el final.":q.expr.includes("split")?"split corta donde hay comas y la lista empieza en 0.":"El primer número entra y el segundo no.");
+      const b2=document.createElement("button");b2.type="button";b2.className="btn";b2.textContent=r+1<R?"Siguiente":"Ver resultado";$(".juego",cont).appendChild(b2);b2.focus({preventScroll:true});b2.addEventListener("click",()=>{r++;ronda();});
+    }));
+  }
+  ronda();
+}
+const GENTE=[["Perez Gil","Ana Maria","30474035"],["Arias Mora","Luis Jose","28999111"],["Lopez Rey","Eva Sofia","31000555"],["Diaz Paz","Juan Carlos","29555222"],["Gomez Rios","Maria Elena","30111222"],["Torres Leon","Pedro Luis","27888999"],["Castro Vera","Ana Lucia","29000111"],["Mendez Sosa","Jose Miguel","31555666"]];
+function jOrden(cont){
+  const ronda0=0;let nivel=0,err=0;
+  function jugar(){
+    if(nivel>=2){const p=Math.max(0,10-err);finJuego(cont,"orden",err===0?"Sin errores: ordenas como la función de clase.":"Te equivocaste "+err+" "+(err===1?"vez":"veces")+". Compara letra por letra: gana la que va antes en el abecedario.",p,10,jOrden);return;}
+    const tam=nivel===0?4:6;const grupo=barajar(GENTE).slice(0,tam);
+    const orden=grupo.slice().sort((x,y)=>x[0]<y[0]?-1:1);let hechos=[];
+    function pinta(msg,malo){
+      const resto=grupo.filter(g=>!hechos.includes(g));
+      let h='<div class="juego"><div class="marcador"><span class="pill">Nivel '+(nivel+1)+' de 2</span><span class="pill esp">Errores: '+err+'</span></div><p class="consigna">Toca a la persona que va '+(hechos.length?"después":"primero")+" por apellido</p>";
+      h+='<span class="zona-t">Lista ordenada</span><div class="notas-t"><table><tbody>'+(hechos.length?hechos.map((g,x)=>"<tr><th>"+x+"</th>"+g.map(v=>'<td class="n" style="text-align:left">'+esc(v)+"</td>").join("")+"</tr>").join(""):'<tr><td class="ayuda">Todavía vacía.</td></tr>')+"</tbody></table></div>";
+      h+='<span class="zona-t">Sin ordenar</span><div class="ops">'+resto.map(g=>'<button type="button" class="op-b'+(malo===g[2]?" bad":"")+'" data-c="'+g[2]+'"><span class="v"><b>'+esc(g[0])+"</b> · "+esc(g[1])+" · "+g[2]+"</span></button>").join("")+'</div><p class="ayuda" aria-live="polite">'+(msg||"La persona se mueve completa: apellido, nombre y cédula juntos.")+"</p></div>";
+      cont.innerHTML=h;
+      $$(".ops .op-b",cont).forEach(b=>b.addEventListener("click",()=>{
+        const g=grupo.find(x=>x[2]===b.dataset.c);const toca=orden[hechos.length];
+        if(g===toca){hechos.push(g);if(hechos.length===tam){pinta("Listo. Así queda después de ordenar(apellidos, nombres, cedulas).");const b2=document.createElement("button");b2.type="button";b2.className="btn";b2.textContent=nivel===0?"Siguiente nivel":"Ver resultado";$(".juego",cont).appendChild(b2);b2.addEventListener("click",()=>{nivel++;jugar();});}else pinta();}
+        else{err++;pinta('"'+g[0]+'" no va todavía: "'+toca[0]+'" va antes en el abecedario.',g[2]);}
+      }));
+    }
+    pinta();
+  }
+  jugar();
+}
+
+/* ---------- examen ---------- */
+function verExamen(){
+  const E=DATA.examen;const prev=S.examen;
+  let h='<div class="intro"><h2>Examen</h2><p>'+E.length+' preguntas sobre las dos clases, una a la vez. Al final ves tu nota sobre 20 y qué repasar. Hazlo después de las lecciones.</p></div><div id="ex"></div>';
+  h+='<section class="ejercicios" aria-labelledby="ej-t"><div class="intro" style="margin:0"><h2 id="ej-t">Ejercicios para la computadora</h2><p>Como en el quiz: hazlos en VS Code. Cada uno dice qué debe salir en la pantalla, trae una pista y la respuesta completa.</p></div>';
+  DATA.ejercicios.forEach((e,k)=>{
+    h+='<article class="ejer"><span class="fu">'+esc(e.fuente)+"</span><h3>"+esc(e.titulo)+"</h3><p>"+fmt(e.enunciado)+'</p><span class="zona-t">Salida esperada</span><pre class="esperada">'+esc(e.salida)+"</pre><details><summary>Ver una pista</summary><div><p>"+fmt(e.pista)+"</p></div></details><details><summary>Ver la respuesta</summary><div>"+codigo(e.solucion,true)+'<button type="button" class="btn sec chico copiar" data-cod="'+k+'">Copiar el código</button></div></details></article>';
+  });
+  h+="</section>";
+  $("#vista").innerHTML=h;
+  $$("[data-cod]").forEach(b=>b.addEventListener("click",()=>copiar(DATA.ejercicios[+b.dataset.cod].solucion,b)));
+  inicioExamen(prev);
+}
+function inicioExamen(prev){
+  const ex=$("#ex");
+  ex.innerHTML='<div class="final"><p>'+(prev?"Tu última nota: <b>"+prev.nota+"/20</b> ("+prev.bien+" de "+prev.total+" correctas).":"Necesitas unos 15 minutos.")+'</p><button type="button" class="btn" id="ex-ini">'+(prev?"Hacer el examen otra vez":"Empezar el examen")+"</button></div>";
+  $("#ex-ini").addEventListener("click",()=>correrExamen());
+}
+function correrExamen(){
+  const E=DATA.examen,ex=$("#ex");let k=0,bien=0;const fallas=[];
+  function una(){
+    if(k>=E.length){
+      const nota=Math.round(bien/E.length*20);S.examen={nota,bien,total:E.length};guardar();
+      ex.innerHTML='<div class="final"><span class="grande">'+nota+'<small> / 20</small></span><p>'+bien+" de "+E.length+" correctas. "+(nota>=18?"Excelente: estás lista para el parcial.":nota>=14?"Bien. Repasa las que fallaste.":nota>=10?"Aprobado, pero repasa las lecciones de lo que fallaste.":"Repasa las lecciones y vuelve a intentarlo.")+"</p>"+
+        (fallas.length?'<p><b>Para repasar:</b></p><ul style="margin:0;padding-left:1.15em">'+fallas.map(f=>"<li>"+fmt(f)+"</li>").join("")+"</ul>":"")+
+        '<div class="fila-ctrl"><button type="button" class="btn" id="ex-otra">Repetir el examen</button><button type="button" class="btn sec" data-ir="aprende">Ir a las lecciones</button></div></div>';
+      $("#ex-otra").addEventListener("click",correrExamen);ex.scrollIntoView({behavior:"smooth",block:"start"});return;
+    }
+    ex.innerHTML='<div class="juego"><div class="marcador"><span class="pill">Pregunta '+(k+1)+" de "+E.length+'</span><span class="pill esp">Correctas: '+bien+'</span></div><div class="barra"><i style="width:'+(k/E.length*100)+'%"></i></div><div id="ex-q" style="width:100%;display:grid"></div></div>';
+    const q=E[k];
+    pregunta(q,$("#ex-q"),(ok,box)=>{
+      if(ok)bien++;else fallas.push(q.q==="¿Qué aparece en la pantalla?"?"Pregunta "+(k+1)+": predecir la salida de un código.":"Pregunta "+(k+1)+": "+q.q);
+      const b=document.createElement("button");b.type="button";b.className="btn";b.textContent=k+1<E.length?"Siguiente pregunta":"Ver mi nota";box.appendChild(b);b.focus({preventScroll:true});
+      b.addEventListener("click",()=>{k++;una();ex.scrollIntoView({block:"start"});});
+    });
+  }
+  una();
+}
+
+/* ---------- navegación ---------- */
+const VISTAS=["aprende","juegos","examen"];
+function ir(v){
+  if(!VISTAS.includes(v))v="aprende";
+  limpiar();
+  $$(".tabs button").forEach(b=>b.setAttribute("aria-current",b.dataset.ir===v?"page":"false"));
+  ({aprende:verAprende,juegos:verJuegos,examen:verExamen})[v]();
+  try{if(location.hash!=="#"+v)history.replaceState(null,"","#"+v);}catch(e){}
+}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-ir]");if(!b)return;e.preventDefault();ir(b.dataset.ir);window.scrollTo({top:0});});
+window.addEventListener("hashchange",()=>{const v=(location.hash||"").replace("#","");if(VISTAS.includes(v))ir(v);});
+ir((location.hash||"").replace("#",""));
+})();
+</script>
+
+</body>
+</html>
